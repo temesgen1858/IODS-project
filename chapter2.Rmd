@@ -1,7 +1,49 @@
-# Insert chapter 2 title here
+# Regression and Model Validation
 
-*Describe the work you have done this week and summarize your learning.*
+```{r}
+students2014<-read.table("D:/GitHub/IODS-project/data/learning2014.txt", header=TRUE, sep=",")
+str(students2014)
+dim(students2014)
+```
 
-- Describe your work and results clearly. 
-- Assume the reader has an introductory course level understanding of writing and reading R code as well as statistical methods
-- Assume the reader has no previous knowledge of your data or the more advanced methods you are using  
+**Description of the data**
+
+The survey data contains information about approaches and study skills, and attitudes toward statistics.For this exercie, 166 observations of 7 variables are extracted from the ASSIST (Approaches and Study Skills Inventory for Students) and SATS (Survey of Attitudes Toward Statistics) data sources. The variables considered for the survey are age, attitude towards statistics, gender, exam points,and study approaches(deep, startegic and surface).
+
+```{r}
+library(ggplot2)
+library(dplyr)
+df<-students2014
+
+ggplot(df, aes(Attitude, Points)) + 
+    geom_point(aes(color=gender)) + geom_smooth()+ ggtitle("Student's statistics attitude versus exam points")
+summary(df$Points)
+summary(df$Age)
+summary(df$Attitude)
+```
+
+As can be seen from the graph, the data distribution shows an increasing trend and there exists some relationship between attitude and exam point. The relationship is positive and linear, i.e. as the attitude gets better, students results increase. In general, the relation tells us that those students having a good attitude towards statics tend to score good results.
+`
+```{r}
+model=lm(Points~Attitude+Age+stra, data=df)
+summary(model)
+```
+The regression result (Points = 0.34808xAttitude - 0.08822xAge + 1.00371xStra) show that exam points are related positively to attitude and strategic study approach, while negatively to age. However, summeries of the statistics indicates that only attitude has significant or statistically meaningful relations with exam points, with three star(0.001) showing significant value. For a dependent variable to be statistically significant, p value should be less than or equal to 0.05.Hence age and strategic approach will be removed and the model fit will be run again.
+Moreover, attitude has a higher t value, meaning it is far by more than six standard deviations from zero and possible to reject the null hypothesis, i.e. we can declare a relationship between Points and Attitude. In addition the standard error is low(round 0.05), meaning the model varies only by 0.05 incase we ran it again and again. 
+```{r}
+model=lm(Points~Attitude, data=df)
+summary(model)
+```
+The model indicates that for a unit increase in attitude value, the exam points will increase by 0.35 and the relationship is significant. The residul standard error on the other hand shows, how much the model prediction deviates from the actual value, i.e. the exam points can deviate by 5.32 points from the actual value.
+The F-statistics(38.6) is larger than  1 and thus indicates there is a relationship between value and attitude, and the it's enough to reject the null hypothesis.
+The multiple r-squared measure how well the model is fitting the actual data. Meaning, around only 19%(r=0.19) of the variance in the response variable(points) is explained by the predictor varible(attitude). And thus the model has low performance. 
+```{r}
+par(mfrow=c(2,2))
+plot(model,1)
+plot(model,2)
+plot(model,5)
+```
+
+The normal Q-Q plot shows that the residuals lined up at 45°compared to an ideal normal observations and hence normality assumption of the linear regression holds true.
+The residuals vs Fitted graph helps to check if the linearity assumption is true. The closer the line to zero,the better the model in meeting linearity assumptions. The residuals, in this case, shows values beyond 2 and -2 standard deviation and thus the linearity assumption needs to be checked. 
+The residual vs leverage result displayed that there is no influential attitude data that can change the slope of the regression model. 
