@@ -1,9 +1,15 @@
----
+
 title: "Logistic regression"
+
 author: "Temesgen"
+
 date: "November 19, 2017"
+
 output: html_document
----
+
+#Chapter 3: Logistic regression
+
+
 *Read data from local folder*
 
 ```{r}
@@ -147,7 +153,8 @@ cros_val <- cv.glm(data = Stud_Alc_Cons, cost = loss_func, glmfit = m1, K = 10)
 # average number of wrong predictions in the cross validation
 cros_val$delta[1]
 ```
-*The preiction error is 0.28. Hence, I didn't find a better model compared to the model in the DataCamp* 
+
+*The prediction error is 0.28. Hence, I didn't find a better model compared to the model in the DataCamp* 
 
 
 
