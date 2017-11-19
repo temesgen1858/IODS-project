@@ -1,0 +1,153 @@
+---
+title: "Logistic regression"
+author: "Temesgen"
+date: "November 19, 2017"
+output: html_document
+---
+*Read data from local folder*
+
+```{r}
+Stud_Alc_Cons <-read.table("D:/GitHub/IODS-project/stu_alc_consu.csv",sep = ";", header = TRUE)
+colnames(Stud_Alc_Cons)
+```
+The data set comprised of 382 observations of 35 variables related to the performace of students in two subjects (Mathematics and Portuguese).The data attributes contain information about students grades, demographic, and social(including alcohol consumption) activities. Details of the attributes can be obtained from https://archive.ics.uci.edu/ml/datasets/Student+Performance
+
+
+*Let's select 4 variables that have relationship with alcohol consumption and state a hypotheses for each of them*
+
+*Selecetd variables:Grade(G2),absences,studytime,and health*
+
+*Hypothesis(1): with high alcohol consumption, student grade decreases*
+
+*Hypothesis(2): with high alcohol consumption rate, student absence rate increases*
+
+*Hypothesis(3): with high alcohol consumption rate, student study less time*
+
+*Hypothesis(4): with high alcohol consumption rate, student's health condition deteriorates more*
+
+*Let's numerically and graphically explore variable distributions and relationships with alcohol consumption*
+
+```{r}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+source("http://pcwww.liv.ac.uk/~william/R/crosstab.r")
+
+
+g1<- ggplot(data=Stud_Alc_Cons,aes(x=G2,fill=sex))
+g1+geom_bar()
+
+crosstab(Stud_Alc_Cons, row.vars = "G2", col.vars = "sex", type = "f")
+
+g2<- ggplot(data=Stud_Alc_Cons,aes(x=absences,fill=sex))
+g2+geom_bar()
+
+crosstab(Stud_Alc_Cons, row.vars = "absences", col.vars = "sex", type = "f")
+
+g3<- ggplot(data=Stud_Alc_Cons,aes(x=studytime,fill=sex))
+g3+geom_bar()
+
+crosstab(Stud_Alc_Cons, row.vars = "studytime", col.vars = "sex", type = "f")
+
+g4<- ggplot(data=Stud_Alc_Cons,aes(x=health,fill=sex))
+g4+geom_bar()
+
+crosstab(Stud_Alc_Cons, row.vars = "health", col.vars = "sex", type = "c")
+
+g5<-ggplot(data=Stud_Alc_Cons,aes(x=high_use,y=G2,col=sex))
+g5+geom_boxplot()+ylab("Grade")
+
+
+g6<-ggplot(data=Stud_Alc_Cons,aes(x=high_use,y=absences,col=sex))
+g6+geom_boxplot()+ylab("Absence")
+
+g7<-ggplot(data=Stud_Alc_Cons,aes(x=high_use,y=studytime,col=sex))
+g7+geom_boxplot()+ylab("Studytime")
+
+g8<-ggplot(data=Stud_Alc_Cons,aes(x=high_use,y=health,col=sex))
+g8+geom_boxplot()+ylab("Health")
+
+
+```
+
+*There are more female (198) students than male(184) in the survey. More female students scored the highest grade than male. The largest number of students absent(58)  from the class is for 2 days.Most of the students study for 2-5 hours,i.e. 2 refers to 2-5 hour. Moreover, majority  are in a very good health condition (45.11% of male and 30.81% of female)*
+
+*Regarding their relationship with alcohol use,  the result indicates that with high alcohol use the grades for both female and male students decreases. The decline in grade is, however, more significant for male students than female. The overall result agrees well with the hypothesis stated above*
+
+*With high rate of alcohol consumption, the number of absent male students is higher than those with low consumption. Where as for female students, the rate of alcohol consumption have no effect, i.e. the median value remain the same for both high and low consumption. Therefore the hypothesis holds true only for male students*
+
+*The resut showed that alcohol consumption rate has no impact on the studytime for both male and female student. Thus, the hypothesis is not true* 
+
+*The result show that with high alcohol consumption, female student's health consitions shows improvement; wheras for male students, it has no effect. Hence, the hypotheis stated above is not true based on the results obtained*
+
+
+```{r}
+m <- glm(high_use ~ G2 + absences + studytime + health , data = Stud_Alc_Cons, family = "binomial")
+
+# print out a summary of the model
+summary(m)
+
+# print out the coefficients of the model
+coef(m)
+#print out the odd ration from coefficients of the model
+ODR <- coef(m) %>% exp
+ODR
+# compute confidence intervals (CI)
+CI <- confint(m) %>% exp
+cbind(ODR, CI)
+```
+
+*The result shows that absences from class and studytime have significant relationship with the probability of alcohol consumption rate, while health and grade(G2) do not. Being absent from class has a positive relationship whereas studytime has negative relation with the probality of alcohol consumption rate, i.e.a unit increase in absence increases the probability of high alcohol consumption by 0.07714, while a unit increase in study time decreases the probability of high alcohol consumption by 0.50762*
+
+*The odd ratio for absences(1.0801949) tells us that absences is positively associated with alcohol consumption(value>1) whereas study time is negatively related(value<1). At 97.5% conidence interval, small values for both variables indicates that the precision of odd ratio is good. Moreover,the result agrees well with both hypothesis stated above, i.e. with high alcohol consumption, student absence increase while study time decrease*
+```{r}
+#let's drop statistically insignificant variables and rebuild the model uisng absences and studytime
+m1 <- glm(high_use ~  absences + studytime , data = Stud_Alc_Cons, family = "binomial")
+summary(m1)
+```
+
+```{r}
+# predict the probability of high_use
+probabilities <- predict(m1, type = "response")
+
+# add the predicted probabilities to 'Stud_Alc_Cons'
+Stud_Alc_Cons <- mutate(Stud_Alc_Cons, probability = probabilities)
+
+# use the probabilities to make a prediction of high_use
+Stud_Alc_Cons <- mutate(Stud_Alc_Cons, prediction = probability>0.5)
+
+# see the last fifteen original classes, predicted probabilities, and class predictions
+select(Stud_Alc_Cons, studytime,absences, high_use, probability, prediction) %>% tail(15)
+
+# provide 2x2 cross tabulation of the prediction and actual values
+table(high_use = Stud_Alc_Cons$high_use, prediction = Stud_Alc_Cons$prediction )
+# Display graphically
+m <- ggplot(Stud_Alc_Cons, aes(x = probability, y=high_use, col=prediction))
+
+# define the geom as points and draw the plot
+m+geom_point()
+
+# calculate training error
+loss_func <- function(class, prob) {
+  n_wrong <- abs(class - prob) > 0.5
+  mean(n_wrong)
+}
+
+
+loss_func(class = Stud_Alc_Cons$high_use, prob = Stud_Alc_Cons$probability)
+
+
+```
+*The resut shows that the model error is 0.28, which means the model can commit a pediction error of about 28%*
+```{r}
+# performing 10-fold cross validation
+library(boot)
+cros_val <- cv.glm(data = Stud_Alc_Cons, cost = loss_func, glmfit = m1, K = 10)
+
+# average number of wrong predictions in the cross validation
+cros_val$delta[1]
+```
+*The preiction error is 0.28. Hence, I didn't find a better model compared to the model in the DataCamp* 
+
+
+

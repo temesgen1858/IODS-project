@@ -1,3 +1,6 @@
 # About the project
 *Open data science course introduce researchers from various fields on how to explore, analyze, and extract meaningful information using open data sources and statistics.*
-[Link to my course diary](https://temesgen1858.github.io/IODS-project/)
+
+Link to my course diary   https://temesgen1858.github.io/IODS-project/
+
+Link to my github page    https://github.com/temesgen1858/IODS-project/
