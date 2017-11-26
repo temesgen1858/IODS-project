@@ -196,7 +196,7 @@ lda.arrows(lda.fit, myscale = 1)
 
 ```
 
-The bi-plot indicates that the first LD1 achieved 98.12% separability while the second only 1.88%. The three clusters are clearly separated, i.e. those with LD1 scores between 5 and 10 are classified under cluster 3, between -5 and 0 under cluster 1, and less than -5 LD1 value as cluster 2. The most influential linear separators for the clusters are "nox"(nitrogen oxides concentration, coef=-0.545) and "rad" (index of accessibility to radial highways, coef=0.2292). Also, other variabels such as "chas"(coef=-0.185) and "dis"(coef= -0.183) are the second most influential.
+The proportion of trace indicates that the first LD1 achieved 98.12% separability while the second only 1.88%. The three clusters are clearly separated in LD1, i.e. those with LD1 scores between 5 and 10 are classified under cluster 2, between -5 and 0 under cluster 1, and less than -5 LD1 value as cluster 3. The most influential linear separators for the clusters are "nox"(nitrogen oxides concentration, coef=-0.545) and "rad" (index of accessibility to radial highways, coef=0.2292). Also, other variabels such as "chas"(coef=-0.185) and "dis"(coef= -0.183) are the second most influential.
 
 
 
