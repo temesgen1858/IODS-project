@@ -1,0 +1,204 @@
+title: "Clustering and classification"
+
+author: "Temesgen"
+
+date: "November 25, 2017"
+
+output: html_document
+
+#Chapter 4: Clustering and Classification
+
+*load Boston data and describe it*
+
+```{r}
+library(MASS)
+data("Boston")
+str(Boston)
+dim(Boston)
+```
+The Boston data contain infromation about housing values in the suburbs of Boston, USA. There are 506 observations of 14 variables in the dataset.The variables(attributes) are:
+
+**crim**- per capita crime rate by town.
+
+**zn** - proportion of residential land zoned for lots over 25,000 sq.ft.
+
+**indus**- proportion of non-retail business acres per town.
+
+**chas** - Charles River dummy variable (= 1 if tract bounds river; 0 otherwise).
+
+**nox**  - nitrogen oxides concentration (parts per 10 million).
+
+**rm**   - average number of rooms per dwelling.
+
+**age**  - proportion of owner-occupied units built prior to 1940.
+
+**dis**  - weighted mean of distances to five Boston employment centres.
+
+**rad**  - index of accessibility to radial highways.
+
+**tax**  - full-value property-tax rate per \$10,000.
+
+**ptratio**- pupil-teacher ratio by town.
+
+**black** -1000(Bk - 0.63)^2 where Bk is the proportion of blacks by town.
+
+**lstat** -lower status of the population (percent).
+
+**medv**  -median value of owner-occupied homes in \$1000s.
+
+
+**Show graphical overview of the data, summaries, distributions, relationships**
+
+```{r}
+library(MASS)
+library(corrplot)
+library(tidyverse)
+summary(Boston)
+pairs(Boston)
+cor_matrix <- round(cor(Boston ), digits=2)
+cor_matrix
+corrplot(cor_matrix, method="circle")
+```
+
+As we can see from the correlation plot and matrix, crime rate is postively and well correlated with accessibility to radial highways(r=0.63) and tax rates(r=0.53). "Zn","Indus","nox", "age" and "rad" also show good(r>0.5) and positive correlation with "dis","nox" "dis","nox", respectively. From  the total fourteen variables, 9 are related negatively to "zn" and "dis".
+
+
+```{r}
+#standardize the dataset and show summary of the data
+library(MASS)
+boston_scaled <- scale(Boston)
+boston_scaled <-as.data.frame(boston_scaled)
+summary(boston_scaled)
+bins <- quantile(boston_scaled$crim)
+bins
+
+# create a categorical variable 'crime'
+crime <- cut(boston_scaled$crim, breaks = bins, include.lowest = TRUE, label=c("low","med_low","med_high","high"))
+# Drop the old crime rate variable from the dataset
+boston_scaled <- dplyr::select(boston_scaled, -crim)
+boston_scaled <- data.frame(boston_scaled, crime)
+#Divide the dataset to train and test sets
+n <- nrow(boston_scaled)
+ind <- sample(n,  size = n * 0.8)
+train <- boston_scaled[ind,]
+test <- boston_scaled[-ind,]
+
+```
+
+All the means of the variables are standarzed to a common mean value of zero and distributed according to their difference or distance from the mean value(zero). 
+
+```{r}
+library(MASS)
+# Fit the linear discriminant analysis on the train set
+lda.fit <- lda(crime~., data = train)
+
+# the function for lda biplot arrows
+lda.arrows <- function(x, myscale = 1, arrow_heads = 0.1, color = "red", tex = 0.75, choices = c(1,2)){
+  heads <- coef(x)
+  arrows(x0 = 0, y0 = 0, 
+         x1 = myscale * heads[,choices[1]], 
+         y1 = myscale * heads[,choices[2]], col=color, length = arrow_heads)
+  text(myscale * heads[,choices], labels = row.names(heads), 
+       cex = tex, col=color, pos=3)
+}
+
+# target classes as numeric
+classes <- as.numeric(train$crime)
+
+# Draw the LDA (bi)plot
+plot(lda.fit, dimen = 2,col=classes,pch=classes)
+lda.arrows(lda.fit, myscale = 1)
+# save the correct classes from test data
+correct_classes <- test$crime
+
+# remove the crime variable from test data
+test <- dplyr::select(test, -crime)
+# predict classes with test data
+lda.pred <- predict(lda.fit, newdata = test)
+
+# cross tabulate the results
+table(correct = correct_classes, predicted = lda.pred$class)
+
+```
+
+The first linear discriminant(which achieved 94.5%  separability)  classifies the high crime rate correclty(100%). As can be seen from the table, all 22 are correctly classified(see the blue clusters in the bi-plot). Whereas there is some level of overlap or poor prediction for medium low and medium high categories(red and green clusters in the bi-plot)
+
+```{r}
+#Reload the Boston dataset and standardize the dataset
+data("Boston")
+scaled_data <- scale(Boston)
+#calculate euclidian distance
+dist_man <- dist(Boston)
+#Run k-means algorithm on the dataset
+km4 <-kmeans(Boston, center=4)
+km3 <-kmeans(Boston, center=3)
+km2 <-kmeans(Boston, center=2)
+# plot the Boston dataset with clusters
+pairs(Boston[6:10], col = km4$cluster)
+pairs(Boston[6:10], col = km3$cluster)
+pairs(Boston[6:10], col = km2$cluster)
+
+#Investigate optimal number of clusters
+k_max <- 10
+
+# calculate the total within sum of squares
+twcss <- sapply(1:k_max, function(k){kmeans(Boston, k)$tot.withinss})
+
+# visualize the results
+qplot(x = 1:k_max, y = twcss, geom = 'line')
+# determine the k-means clustering and run the model again
+km <-kmeans(Boston, centers = 2)
+
+#plot the Boston dataset with clusters
+pairs(Boston, col = km$cluster)
+```
+
+As we can see from the pairs plot, three and four clusters show significant overlap between clusters. Thus to determine the optimal number of clusters, let's use twcss. Plots of testing using the cluters sums of squares with in each cluster(twcss) shows(with maximum number of clusters to be 10) there are two distinct clusters. The sharp change in the twcss line graphs occurs at the second cluster from very high to low. The final results of the pairs plot with two clusters(red and black) now shows very clear separation with minimal overlap compared to the previous cluster(4 and 3).
+
+
+Bonus
+
+```{r}
+library(MASS)
+#standardize the original data
+scaled_bos <- scale(Boston)
+# select number of clusters
+k_max <- 10
+# calculate the total within sum of squares
+twcss <- sapply(1:k_max, function(k){kmeans(Boston, k)$tot.withinss})
+
+# visualize the results
+qplot(x = 1:k_max, y = twcss, geom = 'line')
+#Based on the twcss, select reasonalbe number of cluster
+kma <-kmeans(Boston, center=3)
+pairs(Boston, col = kma$cluster)
+#perform LDA using the clusters as target classes
+lda.fit <- lda(kma$cluster~., data = Boston)
+#Visualize the results with a biplot
+
+lda.arrows <- function(x, myscale = 1, arrow_heads = 0.1, color = "red", tex = 0.75, choices = c(1,2)){
+  heads <- coef(x)
+  arrows(x0 = 0, y0 = 0, 
+         x1 = myscale * heads[,choices[1]], 
+         y1 = myscale * heads[,choices[2]], col=color, length = arrow_heads)
+  text(myscale * heads[,choices], labels = row.names(heads), 
+       cex = tex, col=color, pos=3)
+}
+
+# target classes as numeric
+classes <- as.numeric(kma$cluster)
+
+# Draw the LDA (bi)plot
+plot(lda.fit, dimen = 2,col=classes,pch=classes)
+lda.arrows(lda.fit, myscale = 1)
+
+
+
+```
+
+The bi-plot indicates that the first LD1 achieved 98.12% separability while the second only 1.88%. The three clusters are clearly separated, i.e. those with LD1 scores between 5 and 10 are classified under cluster 3, between -5 and 0 under cluster 1, and less than -5 LD1 value as cluster 2. The most influential linear separators for the clusters are "nox"(nitrogen oxides concentration, coef=-0.545) and "rad" (index of accessibility to radial highways, coef=0.2292). Also, other variabels such as "chas"(coef=-0.185) and "dis"(coef= -0.183) are the second most influential.
+
+
+
+
+
