@@ -1,3 +1,4 @@
+
 title: "Dimentionality Reduction"
 
 author: "Temesgen"
@@ -123,6 +124,5 @@ plot(mca, invisible=c("ind"), habillage="quali")
 plot(mca, invisible=c("var"), habillage="quali")
 
 ```
-
 
 *summaries of the results of the Multiple Correspondence Analysis shows for all categoris the coordinates of the values, the contribution on the axis and the quality of representation measured by square of the cosine( which follows a gaussian distribution) , the correlation ratio between variable(et2). Thus forexample black tea has coordinate 0.477 on the first axis (dim1), and its contribution is 3.159, and the v.test shows that black tea has large positive value(> 1.96) in the first and second dimension while large negative value(< -1.96) in the third dimension*
